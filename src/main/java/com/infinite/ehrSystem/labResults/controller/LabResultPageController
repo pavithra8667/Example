@@ -1,0 +1,69 @@
+package com.infinite.ehrSystem.web;
+import com.infinite.ehrSystem.labResults.dto.LabResultDTO;
+import com.infinite.ehrSystem.labResults.service.LabResultService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.UUID;
+
+@Controller
+@RequestMapping("/lab-results")
+@RequiredArgsConstructor
+public class LabResultPageController {
+
+    private final LabResultService labResultService;
+
+    @GetMapping("/new")
+    public String newResult(
+            @RequestParam UUID labOrderId,
+            Model model) {
+
+        model.addAttribute("labOrderId", labOrderId);
+        model.addAttribute(
+                "today",
+                LocalDate.now()
+        );
+
+        return "lab/lab-result-form";
+    }
+
+    @PostMapping("/save")
+    public String saveResult(
+            @RequestParam UUID labOrderId,
+            @RequestParam String resultValue,
+            @RequestParam(required = false) String unit,
+            @RequestParam String referenceRange,
+            @RequestParam String resultDate) {
+
+        LabResultDTO dto = new LabResultDTO();
+
+        dto.setLabOrderId(labOrderId);
+        dto.setResultValue(resultValue);
+        dto.setUnit(unit);
+        dto.setReferenceRange(referenceRange);
+        dto.setResultDate(
+                LocalDate.parse(resultDate)
+        );
+
+        labResultService.createLabResult(dto);
+
+        return "redirect:/lab-results/view?labOrderId=" + labOrderId;
+    }
+
+    @GetMapping("/view")
+    public String viewResult(
+            @RequestParam UUID labOrderId,
+            Model model) {
+
+        model.addAttribute(
+                "result",
+                labResultService
+                        .getLabResultByLabOrderId(labOrderId)
+        );
+
+        return "lab/lab-result-view";
+    }
+}
